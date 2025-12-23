@@ -4,68 +4,52 @@ import os
 import random
 import qrcode
 from io import BytesIO
+from faker import Faker
+
+# --- INIZIALIZZAZIONE FAKER ---
+fake = Faker('it_IT')
 
 # --- CONFIGURAZIONE STORAGE ---
 ROOMS_DIR = "rooms"
 if not os.path.exists(ROOMS_DIR):
     os.makedirs(ROOMS_DIR)
 
-DEFAULT_WORDS = ["Pizza", "Parigi", "Smartphone", "Harry Potter", "Calcio", "Vampiro", "Internet", "Treno"]
+# Funzione per generare una lista di parole casuali sempre diverse
+def generate_random_words(n=20):
+    categories = [
+        lambda: fake.city(),
+        lambda: fake.job(),
+        lambda: fake.color_name(),
+        lambda: fake.word().capitalize(),
+        lambda: fake.first_name()
+    ]
+    words = []
+    for _ in range(n):
+        words.append(random.choice(categories)())
+    return list(set(words)) # Rimuove eventuali duplicati
 
-# --- UI DESIGN (DARK THEME & MOBILE OPTIMIZED) ---
+# --- UI DESIGN ---
 st.markdown("""
     <style>
-    /* Sfondo e font generale */
     .stApp { background-color: #1e1e1e; color: #ffffff; }
-    
-    /* Header barra superiore */
-    .header-bar {
-        display: flex; justify-content: space-between; align-items: center;
-        padding: 10px 0px; border-bottom: 1px solid #333; margin-bottom: 20px;
-    }
-
-    /* Badge Giocatori */
-    .player-badge { 
-        display: inline-block; padding: 10px 18px; margin: 5px; 
-        border-radius: 12px; background: #2d2d2d; border: 1px solid #444;
-        font-weight: 500; color: #e0e0e0;
-    }
-    .badge-ready { border-color: #00ff88; color: #00ff88; }
-
-    /* Card del Ruolo */
-    .role-card-container {
-        background: #2d2d2d; border-radius: 20px; padding: 25px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center;
-        border: 1px solid #444; margin-top: 15px;
-    }
-    .inner-word-box {
-        background: rgba(0,0,0,0.2); border-radius: 15px;
-        padding: 20px; margin-top: 15px;
-    }
-
-    /* Bottoni */
-    .stButton>button { 
-        width: 100%; border-radius: 12px; height: 3.8em; 
-        font-weight: 600; transition: 0.3s; border: none;
-    }
-    
-    /* Personalizzazione Switch (Toggle) */
-    .stCheckbox label { font-size: 18px !important; color: #bbb !important; }
-    
-    /* Popover menu */
-    div[data-testid="stPopover"] > button {
-        background-color: #333 !important; color: white !important; border-radius: 50% !important;
-        width: 45px !important; height: 45px !important; padding: 0 !important;
-    }
+    .header-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 0px; border-bottom: 1px solid #333; margin-bottom: 20px; }
+    .player-badge { display: inline-block; padding: 10px 18px; margin: 5px; border-radius: 12px; background: #2d2d2d; border: 1px solid #444; font-weight: 500; color: #e0e0e0; }
+    .badge-ready { border-color: #00ff88; color: #00ff88; box-shadow: 0 0 5px #00ff88; }
+    .role-card-container { background: #2d2d2d; border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; border: 1px solid #444; margin-top: 15px; }
+    .inner-word-box { background: #1a2e1f; border-radius: 15px; padding: 25px; margin-top: 15px; border: 1px solid #2d5a3c; }
+    .inner-imposter-box { background: #2e1a1a; border-radius: 15px; padding: 25px; margin-top: 15px; border: 1px solid #5a2d2d; }
+    .stButton>button { width: 100%; border-radius: 12px; height: 3.8em; font-weight: 600; border: none; }
+    div[data-testid="stPopover"] > button { background-color: #333 !important; color: white !important; border-radius: 50% !important; width: 45px !important; height: 45px !important; padding: 0 !important; border: 1px solid #555 !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNZIONI CORE ---
 def load_state(room_id):
     path = os.path.join(ROOMS_DIR, f"{room_id}.json")
     if os.path.exists(path):
-        with open(path, "r") as f: return json.load(f)
-    return {"players": {}, "word": "", "imposter": "", "status": "LOBBY", "word_list": DEFAULT_WORDS}
+        try:
+            with open(path, "r") as f: return json.load(f)
+        except: pass
+    return {"players": {}, "word": "", "imposter": "", "status": "LOBBY", "word_list": generate_random_words()}
 
 def save_state(room_id, state):
     with open(os.path.join(ROOMS_DIR, f"{room_id}.json"), "w") as f:
@@ -73,9 +57,8 @@ def save_state(room_id, state):
 
 # --- GESTIONE URL ---
 room_id = st.query_params.get("room")
-
 if not room_id:
-    st.markdown("<h1 style='text-align: center;'>🕵️ L'Impostore</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #00ff88;'>🕵️ L'Impostore</h1>", unsafe_allow_html=True)
     new_room = st.text_input("Nome della Stanza", placeholder="es: serata-amici").strip()
     if st.button("CREA STANZA", type="primary"):
         if new_room:
@@ -85,12 +68,8 @@ if not room_id:
 
 state = load_state(room_id)
 
-# --- HEADER UI ---
-st.markdown(f"""
-    <div class='header-bar'>
-        <div style='font-size: 1.2em; font-weight: bold;'>Stanza: <span style='color:#00ff88;'>{room_id}</span></div>
-    </div>
-    """, unsafe_allow_html=True)
+# --- HEADER ---
+st.markdown(f"<div class='header-bar'><div style='font-size: 1.2em; font-weight: bold;'>Stanza: <span style='color:#00ff88;'>{room_id}</span></div></div>", unsafe_allow_html=True)
 
 col_inv, col_set, col_ref = st.columns([1, 1, 1])
 with col_inv:
@@ -100,32 +79,33 @@ with col_inv:
         qr = qrcode.make(qr_url)
         buf = BytesIO()
         qr.save(buf)
-        st.image(buf, use_container_width=True)
-        st.caption("Fai scannerizzare questo codice")
+        st.image(buf, width='stretch')
+        st.caption("Fai inquadrare per entrare")
 
 with col_set:
     with st.popover("⚙️"):
-        st.write("### Lista Parole")
-        new_word = st.text_input("Aggiungi parola")
+        st.write("### Gestione Parole")
+        if st.button("🎲 Rigenera lista casuale"):
+            state["word_list"] = generate_random_words()
+            save_state(room_id, state)
+            st.rerun()
+        new_word = st.text_input("Aggiungi parola manuale")
         if st.button("Aggiungi"):
             if new_word and new_word not in state["word_list"]:
                 state["word_list"].append(new_word)
                 save_state(room_id, state)
                 st.rerun()
-        if st.button("Reset Default"):
-            state["word_list"] = DEFAULT_WORDS
-            save_state(room_id, state)
-            st.rerun()
+        st.write("Lista attuale:", ", ".join(state["word_list"]))
 
 with col_ref:
     if st.button("🔄"): st.rerun()
 
 st.divider()
 
-# --- LOGIN / GESTIONE GIOCATORE ---
+# --- LOGIN ---
 if "my_name" not in st.session_state:
-    st.markdown("### 🚪 Entra nel gioco")
-    name = st.text_input("Inserisci il tuo nome").strip()
+    st.markdown("### 🚪 Chi sei?")
+    name = st.text_input("Nome").strip()
     if st.button("PARTECIPA", type="primary"):
         if name:
             st.session_state.my_name = name
@@ -135,9 +115,8 @@ if "my_name" not in st.session_state:
 else:
     my_name = st.session_state.my_name
     
-    # Lista Giocatori (UI Badge)
     st.markdown("### 👥 Giocatori")
-    badges_html = "<div style='margin-bottom: 20px;'>"
+    badges_html = "<div>"
     ready_count = 0
     for p, ready in state["players"].items():
         status_class = "badge-ready" if ready else ""
@@ -147,7 +126,6 @@ else:
     badges_html += "</div>"
     st.markdown(badges_html, unsafe_allow_html=True)
     
-    # Logica Lobby
     if state["status"] == "LOBBY":
         is_ready = state["players"].get(my_name, False)
         if not is_ready:
@@ -156,35 +134,34 @@ else:
                 save_state(room_id, state)
                 st.rerun()
         else:
-            st.success("Sei pronto! Aspettiamo gli altri...")
+            st.success("Sei pronto! In attesa degli altri...")
             if st.button("❌ ANNULLA"):
                 state["players"][my_name] = False
                 save_state(room_id, state)
                 st.rerun()
 
         if len(state["players"]) >= 3 and ready_count == len(state["players"]):
-            st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("🚀 INIZIA PARTITA", type="primary"):
+            if st.button("🚀 INIZIA NUOVO TURNO", type="primary"):
+                # Prende una parola casuale dalla lista generata da Faker
                 state["word"] = random.choice(state["word_list"])
                 state["imposter"] = random.choice(list(state["players"].keys()))
                 state["status"] = "PLAYING"
+                for p in state["players"]: state["players"][p] = False
                 save_state(room_id, state)
                 st.rerun()
 
-    # --- SCHERMATA GIOCO ---
+    # --- IN GIOCO ---
     if state["status"] == "PLAYING":
         st.markdown("### 🔍 Ruolo Segreto")
-        
-        # Switch migliorato visivamente
-        reveal = st.toggle("Svela il mio ruolo ora")
+        reveal = st.toggle("Svela il mio ruolo")
         
         if reveal:
             if my_name == state["imposter"]:
                 st.markdown("""
                     <div class='role-card-container' style='border-top: 5px solid #ff4b4b;'>
-                        <h1 style='color: #ff4b4b; margin:0;'>🎭 IMPOSTORE</h1>
-                        <div class='inner-word-box'>
-                            <p style='color: #bbb;'>Non conosci la parola segreta.<br>Ascolta gli indizi e confondi gli altri!</p>
+                        <h1 style='color: #ff4b4b; margin:0;'>🎭 SEI L'IMPOSTORE</h1>
+                        <div class='inner-imposter-box'>
+                            <p style='color: #ffaaaa;'>Fingi di conoscere la parola!</p>
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
@@ -193,22 +170,27 @@ else:
                     <div class='role-card-container' style='border-top: 5px solid #00ff88;'>
                         <h1 style='color: #00ff88; margin:0;'>👑 INNOCENTE</h1>
                         <div class='inner-word-box'>
-                            <p style='color: #bbb; margin-bottom: 5px;'>La parola segreta è:</p>
-                            <h2 style='font-size: 42px; margin:0; letter-spacing: 2px;'>{state['word'].upper()}</h2>
+                            <p style='color: #aaffcc; margin-bottom: 5px;'>La parola è:</p>
+                            <h2 style='font-size: 40px; margin:0; color: white;'>{state['word'].upper()}</h2>
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
         else:
-            st.info("Attiva lo switch per vedere il tuo ruolo in segreto.")
+            st.markdown("<div style='height: 120px; display: flex; align-items: center; justify-content: center; background: #2d2d2d; border-radius: 20px; border: 1px dashed #555; color: #888;'>Usa lo switch per vedere chi sei</div>", unsafe_allow_html=True)
 
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        if st.button("🔄 FINE PARTITA / RESET"):
-            for p in state["players"]: state["players"][p] = False
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        if st.button("🏁 FINE TURNO (NUOVA PARTITA)", type="primary"):
             state["status"] = "LOBBY"
+            state["word"] = ""
+            state["imposter"] = ""
+            # Rigeneriamo anche la lista per il prossimo turno così è sempre fresca
+            state["word_list"] = generate_random_words()
+            for p in state["players"]: state["players"][p] = False
             save_state(room_id, state)
             st.rerun()
 
-    if st.button("🚪 Esci dalla Stanza", use_container_width=True):
+    if st.button("🚪 Esci dalla Stanza", width='stretch'):
         st.query_params.clear()
         st.session_state.clear()
         st.rerun()
