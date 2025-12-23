@@ -48,7 +48,7 @@ st.title(f"🕵️ Stanza: {room_id}")
 state = load_state(room_id)
 
 # Generazione QR Code dinamico con room_id
-base_url = "https://tuo-gioco.streamlit.app" # SOSTITUISCI CON IL TUO URL DOPO IL DEPLOY
+base_url = "https://blank-app-5j19v4hfo1b.streamlit.app" # SOSTITUISCI CON IL TUO URL DOPO IL DEPLOY
 room_url = f"{base_url}/?room={room_id}"
 
 qr = qrcode.make(room_url)
