@@ -185,7 +185,13 @@ else:
             state["word"] = ""
             state["imposter"] = ""
             # Rigeneriamo anche la lista per il prossimo turno così è sempre fresca
-            state["word_list"] = generate_random_words()
+            state["word_list"] =  [
+                "casa", "scuola", "auto", "libro", "amico", "gatto", "cane", "bicicletta", "albero", "mela", 
+                "tavolo", "sedia", "telefono", "finestra", "porta", "cielo", "sole", "pioggia", "giorno", "notte", 
+                "acqua", "fuoco", "strada", "montagna", "mare", "spiaggia", "fiume", "lago", "foresta", "giardino", 
+                "città", "paese", "villaggio", "pianta", "fiore", "banco", "zaino", "penna", "matita", "gomma", 
+                "cartella", "professore", "studente", "lezione", "compito", "esame", "viaggio", "vacanza", "lavoro"
+            ]
             for p in state["players"]: state["players"][p] = False
             save_state(room_id, state)
             st.rerun()
