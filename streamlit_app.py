@@ -49,7 +49,7 @@ def load_state(room_id):
         try:
             with open(path, "r") as f: return json.load(f)
         except: pass
-    return {"players": {}, "word": "", "imposter": "", "status": "LOBBY", "word_list": generate_random_words()}
+    return {"players": {}, "word": "", "imposter": "", "status": "LOBBY", "word_list": }
 
 def save_state(room_id, state):
     with open(os.path.join(ROOMS_DIR, f"{room_id}.json"), "w") as f:
@@ -86,7 +86,13 @@ with col_set:
     with st.popover("⚙️"):
         st.write("### Gestione Parole")
         if st.button("🎲 Rigenera lista casuale"):
-            state["word_list"] = generate_random_words()
+            state["word_list"] = sostantivi = [
+                "casa", "scuola", "auto", "libro", "amico", "gatto", "cane", "bicicletta", "albero", "mela", 
+                "tavolo", "sedia", "telefono", "finestra", "porta", "cielo", "sole", "pioggia", "giorno", "notte", 
+                "acqua", "fuoco", "strada", "montagna", "mare", "spiaggia", "fiume", "lago", "foresta", "giardino", 
+                "città", "paese", "villaggio", "pianta", "fiore", "banco", "zaino", "penna", "matita", "gomma", 
+                "cartella", "professore", "studente", "lezione", "compito", "esame", "viaggio", "vacanza", "lavoro"
+            ]
             save_state(room_id, state)
             st.rerun()
         new_word = st.text_input("Aggiungi parola manuale")
